@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "nn.h"
 
-NeuralNetwork* NNCreate(size_t* shape, size_t layer_count)
+NeuralNetwork* NNCreate(size_t* shape, Activation* activations, size_t layer_count)
 {
     NeuralNetwork* nn = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
 
@@ -13,6 +13,7 @@ NeuralNetwork* NNCreate(size_t* shape, size_t layer_count)
     nn->errors = (Matrix*)malloc(sizeof(Matrix) * (layer_count - 1));
     nn->layers_z = (Matrix*)malloc(sizeof(Matrix) * layer_count);
     nn->layers_a = (Matrix*)malloc(sizeof(Matrix) * layer_count );
+    nn->activations = activations;
 
     for (size_t i = 0; i < layer_count; i++)
     {
@@ -45,7 +46,12 @@ void NNFeedForward(NeuralNetwork* nn)
         MatMul(&nn->layers_a[i], false, &nn->weights[i], false, &nn->layers_z[i + 1]);
         MatAdd(&nn->layers_z[i + 1], false, &nn->biases[i], false, &nn->layers_z[i+1]);
         MatCopy(&nn->layers_z[i+1], &nn->layers_a[i+1]);
-        MatReLU(&nn->layers_a[i+1]);
+        switch (nn->activations[i])
+        {
+            case Sigmoid: MatSigmoid(&nn->layers_a[i+1]); break;
+            case ReLU: MatReLU(&nn->layers_a[i+1]); break;
+            case None: default: break;
+        }
     }
 }
 
@@ -67,7 +73,14 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
     MatScale(&loss_wrt_a, -2);
 
     MatCopy(&nn->layers_z[nn->layer_count - 1], &a_wrt_z);
-    MatDerReLU(&a_wrt_z);
+    switch (nn->activations[nn->layer_count - 2])
+    {
+        case Sigmoid: MatDerSigmoid(&a_wrt_z); break;
+        case ReLU: MatDerReLU(&a_wrt_z); break;
+        case None: MatFill(&a_wrt_z, 1); break;
+        default: break;
+    }
+    // MatDerReLU(&a_wrt_z);
     MatHadamard(&loss_wrt_a, &a_wrt_z, &nn->errors[nn->layer_count - 2]);
     
     MatAdd(&nn->errors[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2]);
@@ -83,7 +96,14 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
 
         MatReshape(&a_wrt_z, 1, nn->layers_a[i].cols);
         MatCopy(&nn->layers_z[i], &a_wrt_z);
-        MatDerReLU(&a_wrt_z);
+        switch (nn->activations[i - 1])
+        {
+            case Sigmoid: MatDerSigmoid(&a_wrt_z); break;
+            case ReLU: MatDerReLU(&a_wrt_z); break;
+            case None: MatFill(&a_wrt_z, 1); break;
+            default: break;
+        }
+        // MatDerReLU(&a_wrt_z);
 
         MatMul(&nn->errors[i], false, &nn->weights[i], true, &nn->errors[i-1]);
         MatHadamard(&nn->errors[i-1], &a_wrt_z, &nn->errors[i-1]);
@@ -100,12 +120,12 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
     MatFree(&temp_w_grad);
 }
 
-void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size)
+void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size, float learning_rate)
 {
     for (size_t i = 0; i < nn->layer_count - 1; i++)
     {
-        MatScale(&nn->weight_gradients[i], 0.01f / (float)batch_size);
-        MatScale(&nn->bias_gradients[i], 0.01f / (float)batch_size);
+        MatScale(&nn->weight_gradients[i], learning_rate / (float)batch_size);
+        MatScale(&nn->bias_gradients[i], learning_rate / (float)batch_size);
         MatAdd(&nn->weights[i], false, &nn->weight_gradients[i], true, &nn->weights[i]);
         MatAdd(&nn->biases[i], false, &nn->bias_gradients[i], true, &nn->biases[i]);
     }

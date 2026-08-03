@@ -10,12 +10,12 @@ static inline float dersigmoidf(float data) { return sigmoidf(data) * (1 - sigmo
 
 static inline float relu(float data)
 {
-    return __max(0.1 * data, data);
+    return __max(0, data);
 }
 
 static inline float derrelu(float data)
 {
-    if (data <= 0) { return 0.1; }
+    if (data <= 0) { return 0; }
     return 1;
 }
 
@@ -216,6 +216,18 @@ void MatCopy(Matrix *m, Matrix *dest)
 void MatFree(Matrix* m)
 {
     free(m->data);
+}
+
+void MatClamp(Matrix* m, float min, float max)
+{
+    for (size_t i = 0; i < m->rows; i++)
+    {
+        for (size_t j = 0; j < m->cols; j++)
+        {
+            if (MAT_GET(m, i, j) < min) { MAT_GET(m, i, j) = min; }
+            else if (MAT_GET(m, i, j) > max) { MAT_GET(m, i, j) = max; }
+        }
+    }
 }
 
 void MatSigmoid(Matrix *m)

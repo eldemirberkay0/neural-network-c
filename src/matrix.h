@@ -26,6 +26,7 @@ void MatReshape(Matrix* m, size_t rows, size_t cols);
 void MatTranpose(Matrix* m);
 void MatCopy(Matrix *m, Matrix *dest);
 void MatFree(Matrix *m);
+void MatClamp(Matrix* m, float min, float max);
 
 void MatSigmoid(Matrix *m);
 void MatDerSigmoid(Matrix *m);
