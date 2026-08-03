@@ -23,10 +23,12 @@ typedef struct NeuralNetwork
     Matrix* layers_z;
     Matrix* layers_a;
     Activation* activations;
+    float learning_rate;
+    size_t batch_size;
     size_t layer_count;
 } NeuralNetwork;
 
-NeuralNetwork* NNCreate(size_t* shape, Activation* activations, size_t layer_count);
+NeuralNetwork* NNCreate(size_t* shape, Activation* activations, float learning_rate, size_t batch_size, size_t layer_count);
 void NNRand(NeuralNetwork* nn, float min, float max);
 void NNFeedForward(NeuralNetwork* nn);
 float NNCalculateLoss(NeuralNetwork* nn, Matrix* expected);

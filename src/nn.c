@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "nn.h"
 
-NeuralNetwork* NNCreate(size_t* shape, Activation* activations, size_t layer_count)
+NeuralNetwork* NNCreate(size_t* shape, Activation* activations, float learning_rate, size_t batch_size, size_t layer_count)
 {
     NeuralNetwork* nn = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
 
@@ -14,6 +14,7 @@ NeuralNetwork* NNCreate(size_t* shape, Activation* activations, size_t layer_cou
     nn->layers_z = (Matrix*)malloc(sizeof(Matrix) * layer_count);
     nn->layers_a = (Matrix*)malloc(sizeof(Matrix) * layer_count );
     nn->activations = activations;
+    nn->learning_rate = learning_rate;
 
     for (size_t i = 0; i < layer_count; i++)
     {

@@ -3,16 +3,15 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "defs.h"
+#include "utils.h"
 
-#define X_SPACING 0.01f
-#define BORDER 30.0f
+extern float* inputs;
+extern float* outputs;
 
-extern Camera2D camera;
+static inline float FunctionToLearn(float x) { return sinf(x); }
 
-static inline float FunctionToLearn(float x) { return powf(x, 6) - 3 * powf(x, 4) + 2 * powf(x, 2); }
-
-void SetAxes();
+void SetDataset();
+void DrawAxes();
 void PlotOriginalFunction();
 void PlotApproximatedFunction();
 

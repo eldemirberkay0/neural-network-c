@@ -1,27 +1,29 @@
 #include <stdio.h>
-#include "raylib.h"
-#include "defs.h"
+#include <raylib.h>
+#include <time.h>
+#include "utils.h"
 #include "plotter.h"
-
-Camera2D camera = {0};
+#include "model.h"
+#include "camera.h"
 
 int main()
-{    
-    camera.zoom = 1;
-    camera.offset = (Vector2){WIDTH / 2, HEIGHT / 2};
-    camera.target = (Vector2){WIDTH / 2, HEIGHT / 2};
+{
+    srand((unsigned int)time(NULL));
     InitWindow(WIDTH, HEIGHT, "Function Approximator");
-    SetTargetFPS(60);
+    // SetTargetFPS(1);
+    CreateModel();
+    InitCamera();
+    SetDataset();
     while (!WindowShouldClose())
     {
-        camera.zoom += GetMouseWheelMove()*0.2f;
-        if (camera.zoom > ZOOM_MAX) { camera.zoom = ZOOM_MAX; }
-        else if (camera.zoom < ZOOM_MIN) { camera.zoom = ZOOM_MIN; }
+        TrainModel(inputs, outputs, 1);
+        UpdateZoom();
         BeginDrawing();
         ClearBackground(WHITE);
-        SetAxes();
-        PlotOriginalFunction();
         BeginMode2D(camera);
+        DrawAxes();
+        PlotOriginalFunction();
+        PlotApproximatedFunction();
         EndMode2D();
         EndDrawing();
     }
