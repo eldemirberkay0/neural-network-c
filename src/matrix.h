@@ -27,11 +27,15 @@ void MatTranpose(Matrix* m);
 void MatCopy(Matrix *m, Matrix *dest);
 void MatFree(Matrix *m);
 void MatClamp(Matrix* m, float min, float max);
+void MatLog(Matrix* m);
 
 void MatSigmoid(Matrix *m);
 void MatDerSigmoid(Matrix *m);
 
 void MatReLU(Matrix *m);
 void MatDerReLU(Matrix *m);
+
+void MatSoftmax(Matrix* m);
+void MatDerSoftmax(Matrix* mRaw, Matrix* out);
 
 #endif

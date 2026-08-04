@@ -230,6 +230,17 @@ void MatClamp(Matrix* m, float min, float max)
     }
 }
 
+void MatLog(Matrix* m)
+{
+    for (size_t i = 0; i < m->rows; i++)
+    {
+        for (size_t j = 0; j < m->cols; j++)
+        {
+            MAT_GET(m, i, j) = log10f(MAT_GET(m, i, j));
+        }
+    }
+}
+
 void MatSigmoid(Matrix *m)
 {
     for (size_t i = 0; i < m->rows; i++)
@@ -270,6 +281,33 @@ void MatDerReLU(Matrix *m)
         for (size_t j = 0; j < m->cols; j++)
         {
             MAT_GET(m, i, j) = derrelu(MAT_GET(m, i, j));
+        }
+    }
+}
+
+void MatSoftmax(Matrix* m)
+{
+    for (size_t i = 0; i < m->rows; i++)
+    {
+        for (size_t j = 0; j < m->cols; j++)
+        {
+            MAT_GET(m, i, j) = expf(MAT_GET(m, i, j));
+        }
+    }
+
+    float sum = MatSum(m);
+
+    MatScale(m, 1 / sum);
+}
+
+void MatDerSoftmax(Matrix* output_a, Matrix* out)
+{
+    for (size_t i = 0; i < out->rows; i++)
+    {
+        for (size_t j = 0; j < out->cols; j++)
+        {
+            if (i == j) { output_a->data[i] * (1 - output_a->data[i]); }
+            else { -output_a->data[i] * output_a->data[j]; }
         }
     }
 }

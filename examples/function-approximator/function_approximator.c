@@ -6,6 +6,8 @@
 #include "model.h"
 #include "camera.h"
 
+Camera2D camera;
+
 int main()
 {
     srand((unsigned int)time(NULL));
@@ -16,7 +18,6 @@ int main()
     SetDataset();
     while (!WindowShouldClose())
     {
-        TrainModel(inputs, outputs, 1);
         UpdateZoom();
         BeginDrawing();
         ClearBackground(WHITE);
@@ -26,6 +27,7 @@ int main()
         PlotApproximatedFunction();
         EndMode2D();
         EndDrawing();
+        TrainModel(inputs, outputs, 1);
     }
     CloseWindow();
 

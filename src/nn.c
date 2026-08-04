@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "nn.h"
 
-NeuralNetwork* NNCreate(size_t* shape, Activation* activations, float learning_rate, size_t batch_size, size_t layer_count)
+NeuralNetwork* NNCreate(size_t* shape, Activation* activations, Loss loss, float learning_rate, size_t batch_size, size_t layer_count)
 {
     NeuralNetwork* nn = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
 
@@ -15,6 +15,7 @@ NeuralNetwork* NNCreate(size_t* shape, Activation* activations, float learning_r
     nn->layers_a = (Matrix*)malloc(sizeof(Matrix) * layer_count );
     nn->activations = activations;
     nn->learning_rate = learning_rate;
+    nn->loss = loss;
 
     for (size_t i = 0; i < layer_count; i++)
     {
@@ -51,6 +52,7 @@ void NNFeedForward(NeuralNetwork* nn)
         {
             case Sigmoid: MatSigmoid(&nn->layers_a[i+1]); break;
             case ReLU: MatReLU(&nn->layers_a[i+1]); break;
+            case Softmax: MatSoftmax(&nn->layers_a[i+1]); break;
             case None: default: break;
         }
     }
@@ -58,31 +60,55 @@ void NNFeedForward(NeuralNetwork* nn)
 
 float NNCalculateLoss(NeuralNetwork* nn, Matrix* expected)
 {
-    Matrix temp = MatCreate(expected->rows, expected->cols);
-    MatAdd(expected, false, &OUTPUT_LAYER(nn), true, &temp);
-    MatPow(&temp, 2);
-    return MatSum(&temp) / temp.cols;
+    Matrix temp = MatCreate(1, expected->cols);
+    switch (nn->loss)
+    {
+        case MSE:
+            MatAdd(expected, false, &OUTPUT_LAYER(nn), true, &temp);
+            MatPow(&temp, 2);
+            return MatSum(&temp) / temp.cols;
+            break;
+        case CategoricalCrossEntropy:
+            MatCopy(&OUTPUT_LAYER(nn), &temp);
+            MatLog(&temp);
+            MatHadamard(&temp, expected, &temp);
+            MatScale(&temp, -1);
+            return MatSum(&temp) / temp.cols;
+            break;
+        default: break;
+    }
+    MatFree(&temp);
 }
 
 void NNBackProp(NeuralNetwork* nn, Matrix* expected)
 {
-    Matrix loss_wrt_a = MatCreate(1, OUTPUT_LAYER(nn).cols);
-    Matrix a_wrt_z = MatCreate(1, OUTPUT_LAYER(nn).cols);
     Matrix temp_w_grad = MatCreate(nn->weight_gradients[nn->layer_count - 2].rows, nn->weight_gradients[nn->layer_count - 2].cols);
-
-    MatAdd(expected, false, &OUTPUT_LAYER(nn), true, &loss_wrt_a);
-    MatScale(&loss_wrt_a, -2);
-
-    MatCopy(&nn->layers_z[nn->layer_count - 1], &a_wrt_z);
-    switch (nn->activations[nn->layer_count - 2])
+    Matrix a_wrt_z = MatCreate(1, OUTPUT_LAYER(nn).cols);
+    switch (nn->loss)
     {
-        case Sigmoid: MatDerSigmoid(&a_wrt_z); break;
-        case ReLU: MatDerReLU(&a_wrt_z); break;
-        case None: MatFill(&a_wrt_z, 1); break;
+        case MSE:
+            Matrix loss_wrt_a = MatCreate(1, OUTPUT_LAYER(nn).cols);
+            MatAdd(expected, false, &OUTPUT_LAYER(nn), true, &loss_wrt_a);
+            MatScale(&loss_wrt_a, -2);
+
+            MatCopy(&nn->layers_z[nn->layer_count - 1], &a_wrt_z);
+            switch (nn->activations[nn->layer_count - 2])
+            {
+                case Sigmoid: MatDerSigmoid(&a_wrt_z); break;
+                case ReLU: MatDerReLU(&a_wrt_z); break;
+                case None: MatFill(&a_wrt_z, 1); break;
+                default: break;
+            }
+            // MatDerReLU(&a_wrt_z);
+            MatHadamard(&loss_wrt_a, &a_wrt_z, &nn->errors[nn->layer_count - 2]);
+            MatFree(&loss_wrt_a);
+            break;
+        case CategoricalCrossEntropy:
+            MatAdd(&OUTPUT_LAYER(nn), false, expected, true, &nn->errors[nn->layer_count - 2]);
+            break;
         default: break;
     }
-    // MatDerReLU(&a_wrt_z);
-    MatHadamard(&loss_wrt_a, &a_wrt_z, &nn->errors[nn->layer_count - 2]);
+    
     
     MatAdd(&nn->errors[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2]);
     
@@ -116,17 +142,16 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
         MatFree(&temp);
     }
 
-    MatFree(&loss_wrt_a);
     MatFree(&a_wrt_z);
     MatFree(&temp_w_grad);
 }
 
-void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size, float learning_rate)
+void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size)
 {
     for (size_t i = 0; i < nn->layer_count - 1; i++)
     {
-        MatScale(&nn->weight_gradients[i], learning_rate / (float)batch_size);
-        MatScale(&nn->bias_gradients[i], learning_rate / (float)batch_size);
+        MatScale(&nn->weight_gradients[i], nn->learning_rate / (float)batch_size);
+        MatScale(&nn->bias_gradients[i], nn->learning_rate / (float)batch_size);
         MatAdd(&nn->weights[i], false, &nn->weight_gradients[i], true, &nn->weights[i]);
         MatAdd(&nn->biases[i], false, &nn->bias_gradients[i], true, &nn->biases[i]);
     }

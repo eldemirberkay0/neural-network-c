@@ -12,7 +12,7 @@ static Activation activations[3] = {ReLU, ReLU, None};
 
 void CreateModel()
 {
-    nn = NNCreate(shape, activations, 0.00001f, 1, LEN(shape));
+    nn = NNCreate(shape, activations, MSE, 0.00000001f, 1, LEN(shape));
     NNRand(nn, -1.0f, 1.0f);
     expected = MatCreate(1, 1);
 }
@@ -33,7 +33,7 @@ void TrainModel(float* input_datas, float* expected_outputs, size_t batch_size)
             loss += NNCalculateLoss(nn, &expected);
             NNBackProp(nn, &expected);
         }
-        NNUpdateParameters(nn, batch_size, 0.0001f);
+        NNUpdateParameters(nn, batch_size);
         printf("Loss: %f\n", loss / batch_size);
     }
     
