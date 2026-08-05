@@ -236,7 +236,7 @@ void MatLog(Matrix* m)
     {
         for (size_t j = 0; j < m->cols; j++)
         {
-            MAT_GET(m, i, j) = log10f(MAT_GET(m, i, j));
+            MAT_GET(m, i, j) = logf(MAT_GET(m, i, j));
         }
     }
 }

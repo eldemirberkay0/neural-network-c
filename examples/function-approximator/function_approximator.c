@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <raylib.h>
 #include <time.h>
-#include "utils.h"
+#include "defs.h"
 #include "plotter.h"
 #include "model.h"
 #include "camera.h"
@@ -30,7 +30,5 @@ int main()
         TrainModel(inputs, outputs, 1);
     }
     CloseWindow();
-
-    printf("sa beler\n");
     return 0;
 }

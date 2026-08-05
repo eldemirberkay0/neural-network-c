@@ -4,22 +4,21 @@
 
 float* predicted_outputs;
 
-static NeuralNetwork* nn;
-static Matrix expected;
-
 static size_t shape[4] = {1, 32, 32, 1};
 static Activation activations[3] = {ReLU, ReLU, None};
 
+static NeuralNetwork* nn;
+static Matrix expected;
+
 void CreateModel()
 {
-    nn = NNCreate(shape, activations, MSE, 0.00000001f, 1, LEN(shape));
+    nn = NNCreate(shape, activations, MSE, 0.00001f, LEN(shape));
     NNRand(nn, -1.0f, 1.0f);
     expected = MatCreate(1, 1);
 }
 
 void TrainModel(float* input_datas, float* expected_outputs, size_t batch_size)
 {
-    
     for (size_t i = 0; i < (int)(SAMPLE_COUNT / batch_size); i++)
     {
         float loss = 0;

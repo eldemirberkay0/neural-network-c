@@ -23,3 +23,8 @@ file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/function-approximator/*.
 add_executable(function_approximator ${SOURCES})
 target_include_directories(function_approximator PRIVATE examples/function-approximator)
 target_link_libraries(function_approximator nn raylib m)
+
+file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/mnist-learner/*.c")
+add_executable(mnist_learner ${SOURCES})
+target_include_directories(mnist_learner PRIVATE examples/mnist-learner)
+target_link_libraries(mnist_learner nn m)

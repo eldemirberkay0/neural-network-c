@@ -2,7 +2,7 @@
 #define CAMERA_H
 
 #include <raylib.h>
-#include "utils.h"
+#include "defs.h"
 
 extern Camera2D camera;
 

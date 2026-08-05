@@ -2,7 +2,7 @@
 #define MODEL_H
 
 #include <stdint.h>
-#include "utils.h"
+#include "defs.h"
 
 extern float* predicted_outputs;
 

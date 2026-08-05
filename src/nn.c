@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "nn.h"
 
-NeuralNetwork* NNCreate(size_t* shape, Activation* activations, Loss loss, float learning_rate, size_t batch_size, size_t layer_count)
+NeuralNetwork* NNCreate(size_t* shape, Activation* activations, Loss loss, float learning_rate, size_t layer_count)
 {
     NeuralNetwork* nn = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
 
@@ -104,6 +104,7 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
             MatFree(&loss_wrt_a);
             break;
         case CategoricalCrossEntropy:
+            MatFill(&nn->errors[nn->layer_count - 2], 0);
             MatAdd(&OUTPUT_LAYER(nn), false, expected, true, &nn->errors[nn->layer_count - 2]);
             break;
         default: break;
@@ -154,6 +155,8 @@ void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size)
         MatScale(&nn->bias_gradients[i], nn->learning_rate / (float)batch_size);
         MatAdd(&nn->weights[i], false, &nn->weight_gradients[i], true, &nn->weights[i]);
         MatAdd(&nn->biases[i], false, &nn->bias_gradients[i], true, &nn->biases[i]);
+        MatFill(&nn->weight_gradients[i], 0);
+        MatFill(&nn->bias_gradients[i], 0);
     }
 }
 
