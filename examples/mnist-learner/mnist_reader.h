@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include "defs.h"
 
 #define PATH_TRAIN_IMAGE "../examples/mnist-learner/data/train-images.idx3-ubyte"
 #define PATH_TRAIN_LABEL "../examples/mnist-learner/data/train-labels.idx1-ubyte"
@@ -14,8 +15,6 @@
 
 #define LEN_INFO_IMAGE 4 * 4 // 4s info, 4 bytes each
 #define LEN_INFO_LABEL 2 * 4 // 2 info, 4 bytes each
-
-#define SIZE_IMAGE 784
 
 static uint8_t train_image_data_byte[NUM_TRAIN_IMAGE][SIZE_IMAGE];
 static float train_image_data[NUM_TRAIN_IMAGE][SIZE_IMAGE];

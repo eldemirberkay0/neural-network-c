@@ -12,7 +12,7 @@ static Matrix expected;
 
 void CreateModel()
 {
-    nn = NNCreate(shape, activations, MSE, 0.00001f, LEN(shape));
+    nn = NNCreate(shape, activations, MSE, 0.001f, LEN(shape));
     NNRand(nn, -1.0f, 1.0f);
     expected = MatCreate(1, 1);
 }

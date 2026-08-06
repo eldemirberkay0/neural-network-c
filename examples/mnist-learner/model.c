@@ -3,6 +3,15 @@
 #include "model.h"
 #include "defs.h"
 
+#define BATCH_SIZE 32
+#define LEARNING_RATE 0.15f
+#define MAX_EPOCH 2
+#define LOSS_THRESHOLD 0.00001f
+
+static size_t shape[4] = {784, 256, 128, 10};
+static Activation activations[3] = {ReLU, ReLU, Softmax};
+static Loss loss = CategoricalCrossEntropy;
+
 static NeuralNetwork* nn;
 
 void CreateModel()
@@ -64,4 +73,25 @@ void CalculateAccuracy(void)
         if (max_at == test_label[i]) { correct++; }
     }
     printf("Accuracy: %%%.2f\n", correct / 100.0f);
+}
+
+uint8_t MakePredict(float* drawing)
+{
+    nn->layers_a[0].data = drawing;
+    nn->layers_z[0].data = drawing;
+    NNFeedForward(nn);
+
+    uint8_t max_at;
+    float p = 0;
+    for (int j = 0; j < 10; j++)
+    {
+        if (OUTPUT_LAYER(nn).data[j] > p)
+        {
+            max_at = j;
+            p = OUTPUT_LAYER(nn).data[j];
+        }
+    }
+
+    MatPrint(&OUTPUT_LAYER(nn));
+    return max_at;
 }

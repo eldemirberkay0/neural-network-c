@@ -18,7 +18,7 @@ int main()
     SetDataset();
     while (!WindowShouldClose())
     {
-        UpdateZoom();
+        HandleZoom();
         BeginDrawing();
         ClearBackground(WHITE);
         BeginMode2D(camera);
@@ -27,7 +27,7 @@ int main()
         PlotApproximatedFunction();
         EndMode2D();
         EndDrawing();
-        TrainModel(inputs, outputs, 1);
+        TrainModel(inputs, outputs, 10);
     }
     CloseWindow();
     return 0;

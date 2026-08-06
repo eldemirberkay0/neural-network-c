@@ -14,7 +14,7 @@ void InitCamera()
     camera.target = (Vector2){WIDTH / 2, HEIGHT / 2};
 }
 
-void UpdateZoom()
+void HandleZoom()
 {
     if (GetMouseWheelMove() == 0) { return; }
     camera.zoom += GetMouseWheelMove()*0.2f;

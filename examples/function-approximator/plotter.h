@@ -8,7 +8,7 @@
 extern float* inputs;
 extern float* outputs;
 
-static inline float FunctionToLearn(float x) { return 2 * powf(x, 3) - powf(x, 2); }
+static inline float FunctionToLearn(float x) { return x; }
 
 void SetDataset();
 void DrawAxes();

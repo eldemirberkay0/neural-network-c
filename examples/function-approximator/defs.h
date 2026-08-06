@@ -5,8 +5,8 @@
 #define ZOOM_MAX 8.0f
 #define ZOOM_MIN 0.5f
 
-#define X_MAX_DEFAULT 3.0f
-#define X_MIN_DEFAULT -3.0f
+#define X_MAX_DEFAULT 2.0f
+#define X_MIN_DEFAULT -2.f
 #define Y_MAX_DEFAULT (X_MAX_DEFAULT * (HEIGHT / WIDTH))
 #define Y_MIN_DEFAULT (X_MIN_DEFAULT * (HEIGHT / WIDTH))
 #define X_SPACING 0.1f
