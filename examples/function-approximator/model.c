@@ -4,7 +4,7 @@
 
 float* predicted_outputs;
 
-static size_t shape[4] = {1, 32, 32, 1};
+static uint32_t shape[4] = {1, 32, 32, 1};
 static Activation activations[3] = {ReLU, ReLU, None};
 
 static NeuralNetwork* nn;

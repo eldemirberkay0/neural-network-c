@@ -7,7 +7,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
-message("Fetching raylib from github...")
+message(STATUS "Fetching raylib from github...")
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
@@ -19,12 +19,32 @@ FetchContent_MakeAvailable(raylib)
 add_library(nn STATIC src/nn.c src/matrix.c)
 target_include_directories(nn PUBLIC src)
 
-file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/function-approximator/*.c")
+file(GLOB SOURCES "${CMAKE_SOURCE_DIR}/examples/function-approximator/*.c")
 add_executable(function_approximator ${SOURCES})
 target_include_directories(function_approximator PRIVATE examples/function-approximator)
 target_link_libraries(function_approximator nn raylib m)
 
-file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/examples/mnist-learner/*.c")
+# Download MNIST dataset for mnist-learner example
+message(STATUS "Checking MNIST dataset...")
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/examples/mnist-learner/dataset/train-images.idx3-ubyte")
+    message(STATUS "Downloading MNIST dataset... (11 MB)")
+    file(DOWNLOAD 
+        "https://github.com/eldemirberkay0/neural-network-c/releases/download/upload-dataset/mnist-dataset.zip"
+        "${CMAKE_BINARY_DIR}/mnist-dataset.zip"
+    )
+
+    message(STATUS "Trying to extract dataset...")
+    file(ARCHIVE_EXTRACT 
+        INPUT "${CMAKE_BINARY_DIR}/mnist-dataset.zip"
+        DESTINATION "${CMAKE_SOURCE_DIR}/examples/mnist-learner/dataset"
+    )
+    file(REMOVE "${CMAKE_BINARY_DIR}/mnist-dataset.zip")
+else()
+    message(STATUS "MNIST dataset is already downloaded.")
+endif()
+
+file(GLOB SOURCES "${CMAKE_SOURCE_DIR}/examples/mnist-learner/*.c")
+file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/examples/mnist-learner/model")
 add_executable(mnist_learner ${SOURCES})
 target_include_directories(mnist_learner PRIVATE examples/mnist-learner)
 target_link_libraries(mnist_learner raylib nn m)

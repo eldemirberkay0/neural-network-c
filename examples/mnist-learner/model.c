@@ -1,14 +1,15 @@
+#include <stdio.h>
 #include <nn.h>
 #include "mnist_reader.h"
 #include "model.h"
 #include "defs.h"
 
 #define BATCH_SIZE 32
-#define LEARNING_RATE 0.15f
-#define MAX_EPOCH 2
-#define LOSS_THRESHOLD 0.00001f
+#define LEARNING_RATE 0.11f
+#define MAX_EPOCH 1
+#define LOSS_THRESHOLD 0.00005f
 
-static size_t shape[4] = {784, 256, 128, 10};
+static uint32_t shape[4] = {784, 128, 64, 10};
 static Activation activations[3] = {ReLU, ReLU, Softmax};
 static Loss loss = CategoricalCrossEntropy;
 
@@ -17,14 +18,14 @@ static NeuralNetwork* nn;
 void CreateModel()
 {
     nn = NNCreate(shape, activations, loss, LEARNING_RATE, LEN(shape));
-    NNRand(nn, -0.1f, 0.1f);
-    LoadMNIST();
+    NNRand(nn, -0.3f, 0.3f);
 }
 
 void TrainModel()
 {
+    LoadMNIST();
     Matrix expected = MatCreate(1, 10);
-    int batch_count = (int)(NUM_TRAIN_IMAGE / BATCH_SIZE);
+    uint32_t batch_count = (uint32_t)(NUM_TRAIN_IMAGE / BATCH_SIZE);
     if ((NUM_TRAIN_IMAGE % BATCH_SIZE) != 0) { batch_count++; }
     
     for (int i = 0; i < MAX_EPOCH; i++)
@@ -49,7 +50,9 @@ void TrainModel()
             if (loss / k < LOSS_THRESHOLD) { return; }
             NNUpdateParameters(nn, k);
         }
-    } 
+    }
+
+    MatFree(&expected);
 }
 
 void CalculateAccuracy(void)
@@ -70,6 +73,7 @@ void CalculateAccuracy(void)
                 p = OUTPUT_LAYER(nn).data[j];
             }
         }
+        printf("Label: %d, Predicted: %d -> %d\n", test_label[i], max_at, test_label[i] == max_at);
         if (max_at == test_label[i]) { correct++; }
     }
     printf("Accuracy: %%%.2f\n", correct / 100.0f);
@@ -94,4 +98,15 @@ uint8_t MakePredict(float* drawing)
 
     MatPrint(&OUTPUT_LAYER(nn));
     return max_at;
+}
+
+void SaveModelParameters(void)
+{
+    NNSave(nn, shape, "../examples/mnist-learner/model/model.nn");
+}
+
+void LoadModelParameters(void)
+{
+    NNFree(nn);
+    nn = NNLoad("../examples/mnist-learner/model/model.nn");
 }

@@ -9,33 +9,33 @@
 int main()
 {
     srand((unsigned int)time(NULL));
-    
     CreateModel();
-    TrainModel();
-    CalculateAccuracy();
-
+    
     InitWindow(WIDTH, HEIGHT, "MNIST Learner");
     SetTargetFPS(300);
     while (!WindowShouldClose())
     {
-        UpdateDrawing();
+        EditImage();
         BeginDrawing();
         ClearBackground(BLACK);
-        HandleDrawing();
+        DrawImage();
+
         if (IsKeyPressed(KEY_P))
         {
             DownscaleImage();
-            for (int i = 0; i < 28; i++)
-            {
-                for (int j = 0; j < 28; j++)
-                {
-                    printf("%.1f ", drawing_input[j + (i * 28)]);
-                }
-                printf("\n");
-            }
             uint8_t predicted_number = MakePredict(drawing_input);
-            printf("Predicted: %d", predicted_number);
+            printf("Predicted: %d\n", predicted_number);
         }
+
+        if (IsKeyPressed(KEY_T))
+        {
+            TrainModel();
+            CalculateAccuracy();
+        }
+
+        if (IsKeyPressed(KEY_S)) { SaveModelParameters(); } 
+        if (IsKeyPressed(KEY_L)) { LoadModelParameters(); }
+
         EndDrawing();
     }
     CloseWindow();

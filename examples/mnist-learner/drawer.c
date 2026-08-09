@@ -1,11 +1,10 @@
 #include "drawer.h"
 #include <raylib.h>
 #include <stdint.h>
-
 float drawing_raw[(int)WIDTH * (int)HEIGHT] = {0};
 float drawing_input[SIZE_IMAGE] = {0};
 
-void UpdateDrawing()
+void EditImage()
 {
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
     {
@@ -16,7 +15,7 @@ void UpdateDrawing()
             {
                 int x = (int)pos.x + i;
                 int y = (int)pos.y + j;
-                uint32_t index = y + (x * WIDTH);
+                uint32_t index = x + (y * WIDTH);
                 drawing_raw[index] = 1;
             }
         }
@@ -34,14 +33,14 @@ void UpdateDrawing()
     }
 }
 
-void HandleDrawing()
+void DrawImage()
 {
     for (uint32_t i = 0; i < WIDTH; i++)
     {
         for (uint32_t j = 0; j < HEIGHT; j++)
         {
             uint32_t index = j + (i * WIDTH);
-            if (drawing_raw[index] != 0) { DrawPixel(i, j, WHITE); }
+            if (drawing_raw[index] != 0) { DrawPixel(j, i, WHITE); }
         }
     }
 }
@@ -58,11 +57,12 @@ void DownscaleImage()
             {
                 for (int y = startPos.y; y < startPos.y + SCALING_FACTOR; y++)
                 {
-                    uint32_t index = y + (x * WIDTH);
-                    sum += drawing_raw[index];
+                    uint32_t index = x + (y * WIDTH);
+                    float val = drawing_raw[index];
+                    sum += val;
                 }
             }
-            drawing_input[i + (j * WIDTH_IMAGE)] = sum / (SCALING_FACTOR * SCALING_FACTOR);
+            drawing_input[i + (j * WIDTH_IMAGE)] = sum / ((float)SCALING_FACTOR * (float)SCALING_FACTOR);
         }
     }
 }

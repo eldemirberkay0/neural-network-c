@@ -3,13 +3,13 @@
 
 #include "defs.h"
 
-#define BRUSH_SIZE 15
+#define BRUSH_SIZE SCALING_FACTOR + 6
 
 extern float drawing_raw[(int)WIDTH * (int)HEIGHT];
 extern float drawing_input[SIZE_IMAGE];
 
-void UpdateDrawing();
-void HandleDrawing();
+void EditImage();
+void DrawImage();
 void DownscaleImage();
 
 #endif
