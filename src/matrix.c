@@ -299,15 +299,3 @@ void MatSoftmax(Matrix* m)
 
     MatScale(m, 1 / sum);
 }
-
-void MatDerSoftmax(Matrix* output_a, Matrix* out)
-{
-    for (size_t i = 0; i < out->rows; i++)
-    {
-        for (size_t j = 0; j < out->cols; j++)
-        {
-            if (i == j) { output_a->data[i] * (1 - output_a->data[i]); }
-            else { -output_a->data[i] * output_a->data[j]; }
-        }
-    }
-}

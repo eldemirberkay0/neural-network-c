@@ -36,6 +36,5 @@ void MatReLU(Matrix *m);
 void MatDerReLU(Matrix *m);
 
 void MatSoftmax(Matrix* m);
-void MatDerSoftmax(Matrix* mRaw, Matrix* out);
 
 #endif

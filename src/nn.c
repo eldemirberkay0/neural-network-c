@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "nn.h"
 
-NeuralNetwork* NNCreate(size_t* shape, Activation* activations, Loss loss, float learning_rate, size_t layer_count)
+NeuralNetwork* NNCreate(uint32_t* shape, Activation* activations, Loss loss, float learning_rate, uint32_t layer_count)
 {
     NeuralNetwork* nn = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
 
@@ -13,7 +13,7 @@ NeuralNetwork* NNCreate(size_t* shape, Activation* activations, Loss loss, float
     nn->errors = (Matrix*)malloc(sizeof(Matrix) * (layer_count - 1));
     nn->layers_z = (Matrix*)malloc(sizeof(Matrix) * layer_count);
     nn->layers_a = (Matrix*)malloc(sizeof(Matrix) * layer_count );
-    nn->activations = activations;
+    nn->activations = (Activation*)malloc(sizeof(Activation) * layer_count - 1);
     nn->learning_rate = learning_rate;
     nn->loss = loss;
 
@@ -27,6 +27,7 @@ NeuralNetwork* NNCreate(size_t* shape, Activation* activations, Loss loss, float
         nn->weight_gradients[i] = MatCreate(shape[i], shape[i+1]);
         nn->biases[i] = MatCreate(1, shape[i+1]);
         nn->weights[i] = MatCreate(shape[i], shape[i+1]);
+        nn->activations[i] = activations[i];
     }
 
     return nn;
@@ -84,6 +85,7 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
 {
     Matrix temp_w_grad = MatCreate(nn->weight_gradients[nn->layer_count - 2].rows, nn->weight_gradients[nn->layer_count - 2].cols);
     Matrix a_wrt_z = MatCreate(1, OUTPUT_LAYER(nn).cols);
+
     switch (nn->loss)
     {
         case MSE:
@@ -110,9 +112,7 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
         default: break;
     }
     
-    
     MatAdd(&nn->errors[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2]);
-    
     MatMul(&nn->layers_a[nn->layer_count - 2], true, &nn->errors[nn->layer_count - 2], false, &temp_w_grad);
     MatAdd(&nn->weight_gradients[nn->layer_count - 2], false, &temp_w_grad, false, &nn->weight_gradients[nn->layer_count - 2]);
 
@@ -131,7 +131,6 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
             case None: MatFill(&a_wrt_z, 1); break;
             default: break;
         }
-        // MatDerReLU(&a_wrt_z);
 
         MatMul(&nn->errors[i], false, &nn->weights[i], true, &nn->errors[i-1]);
         MatHadamard(&nn->errors[i-1], &a_wrt_z, &nn->errors[i-1]);
@@ -160,7 +159,88 @@ void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size)
     }
 }
 
-void NNPrint(NeuralNetwork* nn)
+void NNFree(NeuralNetwork* nn)
 {
+    for (uint32_t i = 0; i < nn->layer_count; i++)
+    {
+        MatFree(&nn->layers_z[i]);
+        MatFree(&nn->layers_a[i]);
+        if (i == nn->layer_count - 1) { break; }
+        MatFree(&nn->weights[i]);
+        MatFree(&nn->biases[i]);
+        MatFree(&nn->weight_gradients[i]);
+        MatFree(&nn->bias_gradients[i]);
+        MatFree(&nn->errors[i]);
+    }
+    free(nn->activations);
+    free(nn);
+}
 
+void NNSave(NeuralNetwork* nn, uint32_t* shape, const char* path)
+{
+    FILE* fptr = fopen(path, "wb");
+    fseek(fptr, 0, SEEK_SET);
+    fwrite(&nn->layer_count, sizeof(nn->layer_count), 1, fptr); // Layer count (4 byte)
+    fwrite(&nn->loss, sizeof(nn->loss), 1, fptr); // Loss function (4 byte)
+    fwrite(&nn->learning_rate, sizeof(nn->learning_rate), 1, fptr); // Learning rate (4 byte)
+    fwrite(shape, sizeof(uint32_t), nn->layer_count, fptr); // Shape ( Layer count * 4 byte )
+    fwrite(nn->activations, sizeof(Activation), nn->layer_count - 1, fptr); // Activation functions ((Layer count - 1) * 4 bytes)
+
+    // Weights
+    for (uint32_t i = 0; i < nn->layer_count - 1; i++)
+    {
+        Matrix* pMat = &nn->weights[i];
+        fwrite(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);
+    }
+
+    // Biases
+    for (uint32_t i = 0; i < nn->layer_count - 1; i++)
+    {
+        Matrix* pMat = &nn->biases[i];
+        fwrite(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);
+    }
+
+    fclose(fptr);
+}
+
+NeuralNetwork* NNLoad(const char* path)
+{
+    uint32_t layer_count;
+    Loss loss_function;
+    float learning_rate;
+    
+    FILE* fptr = fopen(path, "rb");
+    fseek(fptr, 0, SEEK_SET);
+    fread(&layer_count, sizeof(layer_count), 1, fptr); // Layer count (4 bytes)
+    fread(&loss_function, sizeof(loss_function), 1, fptr); // Loss function (4 bytes)
+    fread(&learning_rate, sizeof(learning_rate), 1, fptr); // Learning rate (4 bytes)
+
+    // Shape (Layer count * 4 bytes)
+    uint32_t* shape = (uint32_t*)malloc((layer_count) * sizeof(uint32_t));
+    fread(shape, sizeof(uint32_t), layer_count, fptr);
+
+    // Activation functions ((Layer count - 1) * 4 bytes)
+    Activation* activation_functions = (Activation*)malloc((layer_count - 1) * sizeof(Activation));
+    fread(activation_functions, sizeof(Activation), layer_count - 1, fptr);
+
+    NeuralNetwork* nn = NNCreate(shape, activation_functions, loss_function, learning_rate, layer_count);
+
+    // Weights
+    for (uint32_t i = 0; i < layer_count - 1; i++)
+    {
+        Matrix* pMat = &nn->weights[i];
+        fread(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);
+    }
+
+    // Biases
+    for (uint32_t i = 0; i < layer_count - 1; i++)
+    {
+        Matrix* pMat = &nn->biases[i];
+        fread(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);
+    }
+
+    fclose(fptr);
+    free(shape);
+    free(activation_functions);
+    return nn;
 }
