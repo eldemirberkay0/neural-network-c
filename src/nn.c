@@ -13,7 +13,7 @@ NeuralNetwork* NNCreate(uint32_t* shape, Activation* activations, Loss loss, flo
     nn->errors = (Matrix*)malloc(sizeof(Matrix) * (layer_count - 1));
     nn->layers_z = (Matrix*)malloc(sizeof(Matrix) * layer_count);
     nn->layers_a = (Matrix*)malloc(sizeof(Matrix) * layer_count );
-    nn->activations = (Activation*)malloc(sizeof(Activation) * layer_count - 1);
+    nn->activations = (Activation*)malloc(sizeof(Activation) * (layer_count - 1));
     nn->learning_rate = learning_rate;
     nn->loss = loss;
 
@@ -68,6 +68,7 @@ float NNCalculateLoss(NeuralNetwork* nn, Matrix* expected)
             MatAdd(expected, false, &OUTPUT_LAYER(nn), true, &temp);
             MatPow(&temp, 2);
             return MatSum(&temp) / temp.cols;
+            MatFree(&temp);
             break;
         case CategoricalCrossEntropy:
             MatCopy(&OUTPUT_LAYER(nn), &temp);
@@ -75,10 +76,10 @@ float NNCalculateLoss(NeuralNetwork* nn, Matrix* expected)
             MatHadamard(&temp, expected, &temp);
             MatScale(&temp, -1);
             return MatSum(&temp) / temp.cols;
+            MatFree(&temp);
             break;
         default: break;
     }
-    MatFree(&temp);
 }
 
 void NNBackProp(NeuralNetwork* nn, Matrix* expected)
@@ -172,6 +173,13 @@ void NNFree(NeuralNetwork* nn)
         MatFree(&nn->bias_gradients[i]);
         MatFree(&nn->errors[i]);
     }
+    free(nn->layers_z);
+    free(nn->layers_a);
+    free(nn->weights);
+    free(nn->biases);
+    free(nn->weight_gradients);
+    free(nn->bias_gradients);
+    free(nn->errors);
     free(nn->activations);
     free(nn);
 }

@@ -6,16 +6,14 @@
 #include "model.h"
 #include "camera.h"
 
-Camera2D camera;
-
 int main()
 {
     srand((unsigned int)time(NULL));
     InitWindow(WIDTH, HEIGHT, "Function Approximator");
-    // SetTargetFPS(1);
+    SetTargetFPS(300);
+    SetDataset();
     CreateModel();
     InitCamera();
-    SetDataset();
     while (!WindowShouldClose())
     {
         HandleZoom();
@@ -27,7 +25,7 @@ int main()
         PlotApproximatedFunction();
         EndMode2D();
         EndDrawing();
-        TrainModel(inputs, outputs, 10);
+        TrainModel(inputs, outputs);
     }
     CloseWindow();
     return 0;

@@ -7,6 +7,6 @@
 extern float* predicted_outputs;
 
 void CreateModel();
-void TrainModel(float* input_datas, float* expected_outputs, size_t batch_size);
+void TrainModel(float* input_datas, float* expected_outputs);
 
 #endif

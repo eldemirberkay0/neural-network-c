@@ -8,11 +8,7 @@
 static inline float sigmoidf(float data) { return 1 / (1 + expf(-data)); }
 static inline float dersigmoidf(float data) { return sigmoidf(data) * (1 - sigmoidf(data)); }
 
-static inline float relu(float data)
-{
-    return __max(0, data);
-}
-
+static inline float relu(float data) { return fmaxf(0, data); }
 static inline float derrelu(float data)
 {
     if (data <= 0) { return 0; }
@@ -75,7 +71,7 @@ void MatPow(Matrix* m, float pow)
 
 void MatAdd(Matrix *m1, bool negate_m1, Matrix *m2, bool negate_m2, Matrix *out)
 {
-    assert(m1->rows == m2->rows || m1->cols == m2->cols || m1->rows == out->rows || m1->cols == out->cols);
+    // assert(m1->rows == m2->rows || m1->cols == m2->cols || m1->rows == out->rows || m1->cols == out->cols);
 
     if (negate_m1) { MatScale(m1, -1); }
     if (negate_m2) { MatScale(m2, -1); }
@@ -177,7 +173,7 @@ float MatSum(Matrix *m)
 void MatReshape(Matrix* m, size_t rows, size_t cols)
 {
     MatFree(m);
-    m->data = malloc(sizeof(size_t) * rows * cols);
+    m->data = malloc(sizeof(float) * rows * cols);
     m->rows = rows;
     m->cols = cols;
 }

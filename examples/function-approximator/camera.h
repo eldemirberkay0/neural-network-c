@@ -4,7 +4,7 @@
 #include <raylib.h>
 #include "defs.h"
 
-extern Camera2D camera;
+static Camera2D camera;
 
 void InitCamera()
 {

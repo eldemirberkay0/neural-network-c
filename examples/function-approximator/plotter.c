@@ -3,6 +3,7 @@
 #include "plotter.h"
 #include "model.h"
 
+size_t sample_count = 0;
 float* inputs;
 float* outputs;
 
@@ -16,14 +17,24 @@ static inline float ScaleY(float y) { return MAP(y, y_min, y_max, HEIGHT, 0); }
 
 void SetDataset()
 {
-    inputs = (float*)malloc(sizeof(float) * SAMPLE_COUNT);
-    outputs = (float*)malloc(sizeof(float) * SAMPLE_COUNT);
-    predicted_outputs = (float*)malloc(sizeof(float) * SAMPLE_COUNT);
-    
-    for (size_t i = 0; i < SAMPLE_COUNT; i++)
+    for (size_t i = 0; i < SAMPLE_COUNT_DEFAULT; i++) 
     {
-        inputs[i] = x_min + (i * X_SPACING);
-        outputs[i] = FunctionToLearn(x_min + (i * X_SPACING));;
+        float y = FunctionToLearn(x_min + (i * X_SPACING));
+        if (y <= Y_MAX_DEFAULT && y >= Y_MIN_DEFAULT) { sample_count++; }
+    }
+    
+    inputs = (float*)malloc(sizeof(float) * sample_count);
+    outputs = (float*)malloc(sizeof(float) * sample_count);
+    predicted_outputs = (float*)malloc(sizeof(float) * sample_count);
+
+    size_t index = 0;
+    for (size_t i = 0; i < SAMPLE_COUNT_DEFAULT; i++) 
+    {
+        float y = FunctionToLearn(x_min + (i * X_SPACING)); 
+        if (y > Y_MAX_DEFAULT || y < Y_MIN_DEFAULT) { continue; }
+        inputs[index] = x_min + (i * X_SPACING);
+        outputs[index] = FunctionToLearn(x_min + (i * X_SPACING));
+        index++;
     }
 }
 
@@ -60,18 +71,18 @@ void DrawAxes()
 
 void PlotOriginalFunction()
 {
-    for (size_t i = 0; i < SAMPLE_COUNT - 1; i++)
+    for (size_t i = 0; i < sample_count - 1; i++)
     {
-        float x  = x_min + (i * X_SPACING);
-        DrawLineEx((Vector2){ScaleX(x), ScaleY(FunctionToLearn(x))}, (Vector2){ScaleX(x + X_SPACING), ScaleY(FunctionToLearn(x + X_SPACING))}, 4.0f, RED);
+        float x  = inputs[i];
+        DrawLineEx((Vector2){ScaleX(x), ScaleY(FunctionToLearn(x))}, (Vector2){ScaleX(x + X_SPACING), ScaleY(FunctionToLearn(x + X_SPACING))}, GRAPH_THICKNESS, RED);
     }
 }
 
 void PlotApproximatedFunction()
 {
-    for (size_t i = 0; i < SAMPLE_COUNT - 1; i++)
+    for (size_t i = 0; i < sample_count - 1; i++)
     {
-        float x  = x_min + i * X_SPACING;
-        DrawLineEx((Vector2){ScaleX(x), ScaleY(predicted_outputs[i])}, (Vector2){ScaleX(x + X_SPACING), ScaleY(predicted_outputs[i + 1])}, 4.0f, BLUE);
+        float x  = inputs[i];
+        DrawLineEx((Vector2){ScaleX(x), ScaleY(predicted_outputs[i])}, (Vector2){ScaleX(x + X_SPACING), ScaleY(predicted_outputs[i + 1])}, GRAPH_THICKNESS, BLUE);
     }
 }
