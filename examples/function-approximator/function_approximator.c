@@ -16,7 +16,7 @@ int main()
     InitCamera();
     while (!WindowShouldClose())
     {
-        HandleZoom();
+        HandleCamera();
         BeginDrawing();
         ClearBackground(WHITE);
         BeginMode2D(camera);

@@ -2,6 +2,7 @@
 #define CAMERA_H
 
 #include <raylib.h>
+#include <raymath.h>
 #include "defs.h"
 
 static Camera2D camera;
@@ -14,8 +15,14 @@ void InitCamera()
     camera.target = (Vector2){WIDTH / 2, HEIGHT / 2};
 }
 
-void HandleZoom()
+void HandleCamera()
 {
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+    {
+        Vector2 delta = GetMouseDelta();
+        delta = Vector2Scale(delta, -1.0f/camera.zoom);
+        camera.target = Vector2Add(camera.target, delta);
+    }
     if (GetMouseWheelMove() == 0) { return; }
     camera.zoom += GetMouseWheelMove()*0.2f;
     if (camera.zoom > ZOOM_MAX) { camera.zoom = ZOOM_MAX; }
