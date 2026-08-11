@@ -9,5 +9,6 @@ void CalculateAccuracy(void);
 uint8_t MakePredict(float* drawing);
 void SaveModelParameters(void);
 void LoadModelParameters(void);
+void FreeModel(void);
 
 #endif

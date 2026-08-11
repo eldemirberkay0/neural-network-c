@@ -4,11 +4,11 @@
 #include "plotter.h"
 
 #define BATCH_SIZE 1
-#define LEARNING_RATE 0.0005f
+#define LEARNING_RATE 0.0001f
 
 float* predicted_outputs;
 
-static uint32_t shape[4] = {1, 32, 32, 1};
+static size_t shape[4] = {1, 32, 32, 1};
 static Activation activations[3] = {ReLU, ReLU, None};
 static Loss loss = MSE;
 
@@ -16,7 +16,7 @@ static NeuralNetwork* nn;
 static Matrix expected;
 static uint32_t batch_count;
 
-void CreateModel()
+void CreateModel(void)
 {
     nn = NNCreate(shape, activations, loss, LEARNING_RATE, LEN(shape));
     NNRand(nn, -1.0f, 1.0f);

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "nn.h"
 
-NeuralNetwork* NNCreate(uint32_t* shape, Activation* activations, Loss loss, float learning_rate, uint32_t layer_count)
+NeuralNetwork* NNCreate(size_t* shape, Activation* activations, Loss loss, float learning_rate, uint16_t layer_count)
 {
     NeuralNetwork* nn = (NeuralNetwork*)malloc(sizeof(NeuralNetwork));
 
@@ -17,7 +17,7 @@ NeuralNetwork* NNCreate(uint32_t* shape, Activation* activations, Loss loss, flo
     nn->learning_rate = learning_rate;
     nn->loss = loss;
 
-    for (size_t i = 0; i < layer_count; i++)
+    for (uint16_t i = 0; i < layer_count; i++)
     {
         nn->layers_a[i] = MatCreate(1, shape[i]);
         nn->layers_z[i] = MatCreate(1, shape[i]);
@@ -35,7 +35,7 @@ NeuralNetwork* NNCreate(uint32_t* shape, Activation* activations, Loss loss, flo
 
 void NNRand(NeuralNetwork* nn, float min, float max)
 {
-    for (size_t i = 0; i < nn->layer_count - 1; i++)
+    for (uint16_t i = 0; i < nn->layer_count - 1; i++)
     {
         MatRand(&nn->weights[i], min, max);
         MatRand(&nn->biases[i], min, max);
@@ -44,7 +44,7 @@ void NNRand(NeuralNetwork* nn, float min, float max)
 
 void NNFeedForward(NeuralNetwork* nn)
 {
-    for (size_t i = 0; i < nn->layer_count - 1; i++)
+    for (uint16_t i = 0; i < nn->layer_count - 1; i++)
     {
         MatMul(&nn->layers_a[i], false, &nn->weights[i], false, &nn->layers_z[i + 1]);
         MatAdd(&nn->layers_z[i + 1], false, &nn->biases[i], false, &nn->layers_z[i+1]);
@@ -117,7 +117,7 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
     MatMul(&nn->layers_a[nn->layer_count - 2], true, &nn->errors[nn->layer_count - 2], false, &temp_w_grad);
     MatAdd(&nn->weight_gradients[nn->layer_count - 2], false, &temp_w_grad, false, &nn->weight_gradients[nn->layer_count - 2]);
 
-    for (size_t i = nn->layer_count - 2; i > 0; i--)
+    for (uint16_t i = nn->layer_count - 2; i > 0; i--)
     {
         Matrix temp = MatCreate(nn->weight_gradients[i-1].rows, nn->weight_gradients[i-1].cols);
 
@@ -162,7 +162,7 @@ void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size)
 
 void NNFree(NeuralNetwork* nn)
 {
-    for (uint32_t i = 0; i < nn->layer_count; i++)
+    for (uint16_t i = 0; i < nn->layer_count; i++)
     {
         MatFree(&nn->layers_z[i]);
         MatFree(&nn->layers_a[i]);
@@ -184,25 +184,25 @@ void NNFree(NeuralNetwork* nn)
     free(nn);
 }
 
-void NNSave(NeuralNetwork* nn, uint32_t* shape, const char* path)
+void NNSave(NeuralNetwork* nn, size_t* shape, const char* path)
 {
     FILE* fptr = fopen(path, "wb");
     fseek(fptr, 0, SEEK_SET);
-    fwrite(&nn->layer_count, sizeof(nn->layer_count), 1, fptr); // Layer count (4 byte)
+    fwrite(&nn->layer_count, sizeof(nn->layer_count), 1, fptr); // Layer count (2 byte)
     fwrite(&nn->loss, sizeof(nn->loss), 1, fptr); // Loss function (4 byte)
     fwrite(&nn->learning_rate, sizeof(nn->learning_rate), 1, fptr); // Learning rate (4 byte)
-    fwrite(shape, sizeof(uint32_t), nn->layer_count, fptr); // Shape ( Layer count * 4 byte )
+    fwrite(shape, sizeof(size_t), nn->layer_count, fptr); // Shape ( Layer count * size_t byte )
     fwrite(nn->activations, sizeof(Activation), nn->layer_count - 1, fptr); // Activation functions ((Layer count - 1) * 4 bytes)
 
     // Weights
-    for (uint32_t i = 0; i < nn->layer_count - 1; i++)
+    for (uint16_t i = 0; i < nn->layer_count - 1; i++)
     {
         Matrix* pMat = &nn->weights[i];
         fwrite(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);
     }
 
     // Biases
-    for (uint32_t i = 0; i < nn->layer_count - 1; i++)
+    for (uint16_t i = 0; i < nn->layer_count - 1; i++)
     {
         Matrix* pMat = &nn->biases[i];
         fwrite(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);
@@ -213,19 +213,19 @@ void NNSave(NeuralNetwork* nn, uint32_t* shape, const char* path)
 
 NeuralNetwork* NNLoad(const char* path)
 {
-    uint32_t layer_count;
+    uint16_t layer_count;
     Loss loss_function;
     float learning_rate;
     
     FILE* fptr = fopen(path, "rb");
     fseek(fptr, 0, SEEK_SET);
-    fread(&layer_count, sizeof(layer_count), 1, fptr); // Layer count (4 bytes)
+    fread(&layer_count, sizeof(layer_count), 1, fptr); // Layer count (2 bytes)
     fread(&loss_function, sizeof(loss_function), 1, fptr); // Loss function (4 bytes)
     fread(&learning_rate, sizeof(learning_rate), 1, fptr); // Learning rate (4 bytes)
 
-    // Shape (Layer count * 4 bytes)
-    uint32_t* shape = (uint32_t*)malloc((layer_count) * sizeof(uint32_t));
-    fread(shape, sizeof(uint32_t), layer_count, fptr);
+    // Shape (Layer count * size_t bytes)
+    size_t* shape = (size_t*)malloc((layer_count) * sizeof(size_t));
+    fread(shape, sizeof(size_t), layer_count, fptr);
 
     // Activation functions ((Layer count - 1) * 4 bytes)
     Activation* activation_functions = (Activation*)malloc((layer_count - 1) * sizeof(Activation));
@@ -234,14 +234,14 @@ NeuralNetwork* NNLoad(const char* path)
     NeuralNetwork* nn = NNCreate(shape, activation_functions, loss_function, learning_rate, layer_count);
 
     // Weights
-    for (uint32_t i = 0; i < layer_count - 1; i++)
+    for (uint16_t i = 0; i < layer_count - 1; i++)
     {
         Matrix* pMat = &nn->weights[i];
         fread(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);
     }
 
     // Biases
-    for (uint32_t i = 0; i < layer_count - 1; i++)
+    for (uint16_t i = 0; i < layer_count - 1; i++)
     {
         Matrix* pMat = &nn->biases[i];
         fread(pMat->data, sizeof(float), pMat->rows * pMat->cols, fptr);

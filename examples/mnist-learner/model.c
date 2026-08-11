@@ -6,10 +6,10 @@
 
 #define BATCH_SIZE 32
 #define LEARNING_RATE 0.11f
-#define MAX_EPOCH 1
-#define LOSS_THRESHOLD 0.00005f
+#define MAX_EPOCH 2
+#define LOSS_THRESHOLD 0.00001f
 
-static uint32_t shape[4] = {784, 128, 64, 10};
+static size_t shape[4] = {784, 128, 64, 10};
 static Activation activations[3] = {ReLU, ReLU, Softmax};
 static Loss loss = CategoricalCrossEntropy;
 
@@ -23,7 +23,7 @@ void CreateModel()
 
 void TrainModel()
 {
-    LoadMNIST();
+    if (!LoadMNIST()) { return; }
     Matrix expected = MatCreate(1, 10);
     uint32_t batch_count = (uint32_t)(NUM_TRAIN_IMAGE / BATCH_SIZE);
     if ((NUM_TRAIN_IMAGE % BATCH_SIZE) != 0) { batch_count++; }
@@ -102,11 +102,26 @@ uint8_t MakePredict(float* drawing)
 
 void SaveModelParameters(void)
 {
-    NNSave(nn, shape, "../examples/mnist-learner/model/model.nn");
+    NNSave(nn, shape, CMAKE_PATH_TRAINED_MODEL);
 }
 
 void LoadModelParameters(void)
 {
     NNFree(nn);
-    nn = NNLoad("../examples/mnist-learner/model/model.nn");
+    FILE* fptr = fopen(CMAKE_PATH_TRAINED_MODEL, "rb");
+    if (fptr == NULL)
+    {
+        printf("Couldn't find model.nn file on %s\n", CMAKE_PATH_TRAINED_MODEL);
+        printf("Please train a new model or download the pre-trained model from the github repo\n", CMAKE_PATH_TRAINED_MODEL);
+        fclose(fptr);
+        return;
+    }
+    fclose(fptr);
+    nn = NNLoad(CMAKE_PATH_TRAINED_MODEL);
+    printf("\nModel loaded from: %s\n", CMAKE_PATH_TRAINED_MODEL);
+}
+
+void FreeModel(void)
+{
+    NNFree(nn);
 }

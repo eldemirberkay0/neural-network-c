@@ -1,15 +1,14 @@
 #include "matrix.h"
 #include <stdlib.h>
 #include <math.h>
-#include <assert.h>
 
 #define MAT_GET(matrix, row, col) (matrix)->data[(row) * (matrix)->cols + (col)]
 
 static inline float sigmoidf(float data) { return 1 / (1 + expf(-data)); }
 static inline float dersigmoidf(float data) { return sigmoidf(data) * (1 - sigmoidf(data)); }
 
-static inline float relu(float data) { return fmaxf(0, data); }
-static inline float derrelu(float data)
+static inline float reluf(float data) { return fmaxf(0, data); }
+static inline float derreluf(float data)
 {
     if (data <= 0) { return 0; }
     return 1;
@@ -71,8 +70,6 @@ void MatPow(Matrix* m, float pow)
 
 void MatAdd(Matrix *m1, bool negate_m1, Matrix *m2, bool negate_m2, Matrix *out)
 {
-    // assert(m1->rows == m2->rows || m1->cols == m2->cols || m1->rows == out->rows || m1->cols == out->cols);
-
     if (negate_m1) { MatScale(m1, -1); }
     if (negate_m2) { MatScale(m2, -1); }
 
@@ -90,23 +87,9 @@ void MatAdd(Matrix *m1, bool negate_m1, Matrix *m2, bool negate_m2, Matrix *out)
 
 void MatMul(Matrix* m1, bool tranpose_m1, Matrix* m2, bool tranpose_m2, Matrix* out)
 {
-    /*
-    if (!tranpose_m1 && !tranpose_m2) { assert(m1->rows == out->rows && m2->cols == out->cols && m1->cols == m2->rows); }
-    if (tranpose_m1 && tranpose_m2) { assert(m1->cols == out->rows && m2->rows == out->cols && m1->rows == m2->cols); }
-    if (tranpose_m1 && !tranpose_m2) { assert(m1->cols == out->rows && m2->cols == out->cols && m1->rows == m2->rows); }
-    if (!tranpose_m1 && tranpose_m2) { assert(m1->rows == out->rows && m2->rows == out->cols && m1->cols == m2->cols); }
-    */
-
     Matrix temp = MatCreate(out->rows, out->cols);
-    MatFill(&temp, 0);
     if (tranpose_m1) { MatTranpose(m1); }
     if (tranpose_m2) { MatTranpose(m2); }
-
-    /*
-    size_t final_i = (tranpose_m1 ? m1->cols : m1->rows);
-    size_t final_j = (tranpose_m2 ? m2->rows : m2->cols);
-    size_t final_k = (tranpose_m2 ? m2->cols : m2->rows);
-    */
 
     for (size_t i = 0; i < m1->rows; i++)
     {
@@ -128,8 +111,6 @@ void MatMul(Matrix* m1, bool tranpose_m1, Matrix* m2, bool tranpose_m2, Matrix* 
 
 void MatHadamard(Matrix* m1, Matrix* m2, Matrix* out)
 {
-    if (m1->rows != m2->rows || m1->cols != m2->cols || m1->rows != out->rows || m1->cols != out->cols) { return; }
-
     for (size_t i = 0; i < m1->rows; i++)
     {
         for (size_t j = 0; j < m1->cols; j++)
@@ -198,8 +179,6 @@ void MatTranpose(Matrix* m)
 
 void MatCopy(Matrix *m, Matrix *dest)
 {
-    // Check dimensions
-
     for (size_t i = 0; i < m->rows; i++)
     {
         for (size_t j = 0; j < m->cols; j++)
@@ -265,7 +244,7 @@ void MatReLU(Matrix *m)
     {
         for (size_t j = 0; j < m->cols; j++)
         {
-            MAT_GET(m, i, j) = relu(MAT_GET(m, i, j));
+            MAT_GET(m, i, j) = reluf(MAT_GET(m, i, j));
         }
     }
 }
@@ -276,7 +255,7 @@ void MatDerReLU(Matrix *m)
     {
         for (size_t j = 0; j < m->cols; j++)
         {
-            MAT_GET(m, i, j) = derrelu(MAT_GET(m, i, j));
+            MAT_GET(m, i, j) = derreluf(MAT_GET(m, i, j));
         }
     }
 }
@@ -292,6 +271,5 @@ void MatSoftmax(Matrix* m)
     }
 
     float sum = MatSum(m);
-
     MatScale(m, 1 / sum);
 }

@@ -3,7 +3,7 @@
 
 #include "defs.h"
 
-#define BRUSH_SIZE SCALING_FACTOR + 6
+#define BRUSH_SIZE SCALING_FACTOR + 8
 
 extern float drawing_raw[(int)WIDTH * (int)HEIGHT];
 extern float drawing_input[SIZE_IMAGE];

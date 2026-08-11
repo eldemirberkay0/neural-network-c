@@ -1,2 +1,3 @@
 /build
 /examples/mnist-learner/dataset
+.vscode/
