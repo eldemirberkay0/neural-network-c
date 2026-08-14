@@ -12,10 +12,10 @@ static inline float ScaleY(float y) { return MAP(y, Y_MIN, Y_MAX, HEIGHT, 0); }
 
 void SetDataset()
 {
-    for (size_t i = 0; i < SAMPLE_COUNT_DEFAULT; i++) 
+    for (size_t i = 0; i < SAMPLE_COUNT_DEFAULT; i++)
     {
         float y = FunctionToLearn(X_MIN + (i * X_SPACING));
-        if (y <= Y_MAX && y >= Y_MIN) { sample_count++; }
+        if (y <= Y_MAX && y >= Y_MIN && !isnan(y)) { sample_count++; }
     }
     
     inputs = (float*)malloc(sizeof(float) * sample_count);
@@ -25,8 +25,8 @@ void SetDataset()
     size_t index = 0;
     for (size_t i = 0; i < SAMPLE_COUNT_DEFAULT; i++) 
     {
-        float y = FunctionToLearn(X_MIN + (i * X_SPACING)); 
-        if (y > Y_MAX || y < Y_MIN) { continue; }
+        float y = FunctionToLearn(X_MIN + (i * X_SPACING));
+        if (y > Y_MAX || y < Y_MIN || isnan(y)) { continue; }
         inputs[index] = X_MIN + (i * X_SPACING);
         outputs[index] = FunctionToLearn(X_MIN + (i * X_SPACING));
         index++;

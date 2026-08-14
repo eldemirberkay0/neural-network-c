@@ -5,14 +5,13 @@
 #include <math.h>
 #include "defs.h"
 
-
-static inline float FunctionToLearn(float x) { return powf(x, 2); }
+static inline float FunctionToLearn(float x) { return sqrtf(x); }
 
 #define GRAPH_THICKNESS 4.0f
 #define X_MAX 10.0f
-#define X_MIN -10.0f
+#define X_MIN -X_MAX
 #define Y_MAX (X_MAX * (HEIGHT / WIDTH))
-#define Y_MIN (X_MIN * (HEIGHT / WIDTH))
+#define Y_MIN -Y_MAX
 #define X_SPACING 0.1f
 #define SAMPLE_COUNT_DEFAULT ((int)((X_MAX - X_MIN) / X_SPACING))
 
