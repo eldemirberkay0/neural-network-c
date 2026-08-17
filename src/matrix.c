@@ -46,7 +46,7 @@ void MatRand(Matrix* m, float min, float max)
     }
 }
 
-void MatScale(Matrix *m, float scale)
+void MatScale(Matrix* m, float scale)
 {
     for (size_t i = 0; i < m->rows; i++)
     {
@@ -68,11 +68,8 @@ void MatPow(Matrix* m, float pow)
     }
 }
 
-void MatAdd(Matrix *m1, bool negate_m1, Matrix *m2, bool negate_m2, Matrix *out)
+void MatAdd(Matrix* m1, Matrix* m2, Matrix* out)
 {
-    if (negate_m1) { MatScale(m1, -1); }
-    if (negate_m2) { MatScale(m2, -1); }
-
     for (size_t i = 0; i < m1->rows; i++)
     {
         for (size_t j = 0; j < m1->cols; j++)
@@ -80,30 +77,40 @@ void MatAdd(Matrix *m1, bool negate_m1, Matrix *m2, bool negate_m2, Matrix *out)
             MAT_GET(out, i, j) = MAT_GET(m1, i, j) + MAT_GET(m2, i, j);
         }
     }
+}
 
-    if (negate_m1) { MatScale(m1, -1); }
-    if (negate_m2) { MatScale(m2, -1); }
+void MatSubtract(Matrix* m1, Matrix* m2, Matrix* out)
+{
+    for (size_t i = 0; i < m1->rows; i++)
+    {
+        for (size_t j = 0; j < m1->cols; j++)
+        {
+            MAT_GET(out, i, j) = MAT_GET(m1, i, j) - MAT_GET(m2, i, j);
+        }
+    }
 }
 
 void MatMul(Matrix* m1, bool tranpose_m1, Matrix* m2, bool tranpose_m2, Matrix* out)
 {
     Matrix temp = MatCreate(out->rows, out->cols);
-    if (tranpose_m1) { MatTranpose(m1); }
-    if (tranpose_m2) { MatTranpose(m2); }
 
-    for (size_t i = 0; i < m1->rows; i++)
+    size_t final_i = tranpose_m1 ? m1->cols : m1->rows;
+    size_t final_j = tranpose_m2 ? m2->rows : m2->cols;
+    size_t final_k = tranpose_m2 ? m2->cols : m2->rows;
+
+    for (size_t i = 0; i < final_i; i++)
     {
-        for (size_t j = 0; j < m2->cols; j++)
+        for (size_t j = 0; j < final_j; j++)
         {
-            for (size_t k = 0; k < m2->rows; k++)
+            for (size_t k = 0; k < final_k; k++)
             {
-                MAT_GET(&temp, i, j) += MAT_GET(m1, i, k) * MAT_GET(m2, k, j);
+                if (!tranpose_m1 && !tranpose_m2) { MAT_GET(&temp, i, j) += MAT_GET(m1, i, k) * MAT_GET(m2, k, j); }
+                else if (tranpose_m1 && !tranpose_m2) { MAT_GET(&temp, i, j) += MAT_GET(m1, k, i) * MAT_GET(m2, k, j); }
+                else if (!tranpose_m1 && tranpose_m2) { MAT_GET(&temp, i, j) += MAT_GET(m1, i, k) * MAT_GET(m2, j, k); }
+                else { MAT_GET(&temp, i, j) += MAT_GET(m1, k, i) * MAT_GET(m2, j, k); }
             }
         }
     }
-
-    if (tranpose_m1) { MatTranpose(m1); }
-    if (tranpose_m2) { MatTranpose(m2); }
 
     MatCopy(&temp, out);
     MatFree(&temp);
@@ -138,7 +145,7 @@ void MatPrint(Matrix* m)
     }
 }
 
-float MatSum(Matrix *m)
+float MatSum(Matrix* m)
 {
     float sum = 0;
     for (size_t i = 0; i < m->rows; i++)
@@ -159,25 +166,7 @@ void MatReshape(Matrix* m, size_t rows, size_t cols)
     m->cols = cols;
 }
 
-void MatTranpose(Matrix* m)
-{
-    Matrix temp = MatCreate(m->cols, m->rows);
-
-    for (size_t i = 0; i < m->rows; i++)
-    {
-        for (size_t j = 0; j < m->cols; j++)
-        {
-            MAT_GET(&temp, j, i) = MAT_GET(m, i, j);
-        }
-    }
-
-    m->rows = temp.rows;
-    m->cols = temp.cols;
-    MatCopy(&temp, m);
-    MatFree(&temp);
-}
-
-void MatCopy(Matrix *m, Matrix *dest)
+void MatCopy(Matrix* m, Matrix* dest)
 {
     for (size_t i = 0; i < m->rows; i++)
     {
@@ -193,18 +182,6 @@ void MatFree(Matrix* m)
     free(m->data);
 }
 
-void MatClamp(Matrix* m, float min, float max)
-{
-    for (size_t i = 0; i < m->rows; i++)
-    {
-        for (size_t j = 0; j < m->cols; j++)
-        {
-            if (MAT_GET(m, i, j) < min) { MAT_GET(m, i, j) = min; }
-            else if (MAT_GET(m, i, j) > max) { MAT_GET(m, i, j) = max; }
-        }
-    }
-}
-
 void MatLog(Matrix* m)
 {
     for (size_t i = 0; i < m->rows; i++)
@@ -216,7 +193,7 @@ void MatLog(Matrix* m)
     }
 }
 
-void MatSigmoid(Matrix *m)
+void MatSigmoid(Matrix* m)
 {
     for (size_t i = 0; i < m->rows; i++)
     {
@@ -227,7 +204,7 @@ void MatSigmoid(Matrix *m)
     }
 }
 
-void MatDerSigmoid(Matrix *m)
+void MatDerSigmoid(Matrix* m)
 {
     for (size_t i = 0; i < m->rows; i++)
     {
@@ -238,7 +215,7 @@ void MatDerSigmoid(Matrix *m)
     }
 }
 
-void MatReLU(Matrix *m)
+void MatReLU(Matrix* m)
 {
     for (size_t i = 0; i < m->rows; i++)
     {
@@ -249,7 +226,7 @@ void MatReLU(Matrix *m)
     }
 }
 
-void MatDerReLU(Matrix *m)
+void MatDerReLU(Matrix* m)
 {
     for (size_t i = 0; i < m->rows; i++)
     {
@@ -269,7 +246,5 @@ void MatSoftmax(Matrix* m)
             MAT_GET(m, i, j) = expf(MAT_GET(m, i, j));
         }
     }
-
-    float sum = MatSum(m);
-    MatScale(m, 1 / sum);
+    MatScale(m, 1 / MatSum(m));
 }

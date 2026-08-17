@@ -8,5 +8,6 @@ extern float* predicted_outputs;
 
 void CreateModel(void);
 void TrainModel(float* input_datas, float* expected_outputs);
+void RandModel(void);
 
 #endif

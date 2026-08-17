@@ -26,6 +26,7 @@ int main()
         EndMode2D();
         EndDrawing();
         TrainModel(inputs, outputs);
+        if (IsKeyPressed(KEY_R)) { RandModel(); }
     }
     CloseWindow();
     return 0;

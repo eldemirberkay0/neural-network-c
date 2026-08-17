@@ -40,7 +40,7 @@ void DrawAxes()
     char number[5];
 
     size_t index = 0;
-    for (int x = X_MIN; x < X_MAX; x++)
+    for (int x = X_MIN; x < X_MAX + 0.0001f; x++)
     {
         DrawCircle(ScaleX(x), HEIGHT / 2, 3, BLACK);
         sprintf(number, "%d", x);
@@ -48,7 +48,7 @@ void DrawAxes()
     }
     
     index = 0;
-    for (int y = Y_MIN; y < Y_MAX; y++)
+    for (int y = Y_MIN; y < Y_MAX + 0.0001f; y++)
     {
         if (y == 0) { continue; }
         DrawCircle(WIDTH / 2, ScaleY(y), 3, BLACK);

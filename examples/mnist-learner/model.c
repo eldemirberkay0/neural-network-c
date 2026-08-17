@@ -6,8 +6,8 @@
 
 #define BATCH_SIZE 32
 #define LEARNING_RATE 0.11f
-#define MAX_EPOCH 2
-#define LOSS_THRESHOLD 0.00001f
+#define MAX_EPOCH 10
+#define LOSS_THRESHOLD 0.000001f
 
 static size_t shape[4] = {784, 128, 64, 10};
 static Activation activations[3] = {ReLU, ReLU, Softmax};
@@ -46,7 +46,7 @@ void TrainModel()
                 NNBackProp(nn, &expected);
                 //printf("Image: %d\n", k + (j * BATCH_SIZE));
             }
-            printf("Epoch %d: %d/%d, Loss: %f\n", i + 1, j, batch_count, loss / k);
+            printf("Epoch %d: %d/%d, Loss: %f\n", i + 1, j + 1, batch_count, loss / k);
             if (loss / k < LOSS_THRESHOLD) { return; }
             NNUpdateParameters(nn, k);
         }
@@ -73,7 +73,7 @@ void CalculateAccuracy(void)
                 p = OUTPUT_LAYER(nn).data[j];
             }
         }
-        printf("Label: %d, Predicted: %d -> %d\n", test_label[i], max_at, test_label[i] == max_at);
+        //printf("Label: %d, Predicted: %d -> %d\n", test_label[i], max_at, test_label[i] == max_at);
         if (max_at == test_label[i]) { correct++; }
     }
     printf("Accuracy: %%%.2f\n", correct / 100.0f);
@@ -107,16 +107,16 @@ void SaveModelParameters(void)
 
 void LoadModelParameters(void)
 {
-    NNFree(nn);
     FILE* fptr = fopen(CMAKE_PATH_TRAINED_MODEL, "rb");
     if (fptr == NULL)
     {
         printf("Couldn't find model.nn file on %s\n", CMAKE_PATH_TRAINED_MODEL);
-        printf("Please train a new model or download the pre-trained model from the github repo\n", CMAKE_PATH_TRAINED_MODEL);
+        printf("Please train a new model or download the pre-trained model from the github repo\n");
         fclose(fptr);
         return;
     }
     fclose(fptr);
+    NNFree(nn);
     nn = NNLoad(CMAKE_PATH_TRAINED_MODEL);
     printf("\nModel loaded from: %s\n", CMAKE_PATH_TRAINED_MODEL);
 }

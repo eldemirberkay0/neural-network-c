@@ -47,7 +47,7 @@ void NNFeedForward(NeuralNetwork* nn)
     for (uint16_t i = 0; i < nn->layer_count - 1; i++)
     {
         MatMul(&nn->layers_a[i], false, &nn->weights[i], false, &nn->layers_z[i + 1]);
-        MatAdd(&nn->layers_z[i + 1], false, &nn->biases[i], false, &nn->layers_z[i+1]);
+        MatAdd(&nn->layers_z[i + 1], &nn->biases[i], &nn->layers_z[i+1]);
         MatCopy(&nn->layers_z[i+1], &nn->layers_a[i+1]);
         switch (nn->activations[i])
         {
@@ -61,22 +61,25 @@ void NNFeedForward(NeuralNetwork* nn)
 
 float NNCalculateLoss(NeuralNetwork* nn, Matrix* expected)
 {
+    float loss = 0;
     Matrix temp = MatCreate(1, expected->cols);
     switch (nn->loss)
     {
         case MSE:
-            MatAdd(expected, false, &OUTPUT_LAYER(nn), true, &temp);
+            MatSubtract(expected, &OUTPUT_LAYER(nn), &temp);
             MatPow(&temp, 2);
-            return MatSum(&temp) / temp.cols;
+            loss = MatSum(&temp) / temp.cols;
             MatFree(&temp);
+            return loss;
             break;
         case CategoricalCrossEntropy:
             MatCopy(&OUTPUT_LAYER(nn), &temp);
             MatLog(&temp);
             MatHadamard(&temp, expected, &temp);
             MatScale(&temp, -1);
-            return MatSum(&temp) / temp.cols;
+            loss = MatSum(&temp) / temp.cols; 
             MatFree(&temp);
+            return loss;
             break;
         default: break;
     }
@@ -91,7 +94,7 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
     {
         case MSE:
             Matrix loss_wrt_a = MatCreate(1, OUTPUT_LAYER(nn).cols);
-            MatAdd(expected, false, &OUTPUT_LAYER(nn), true, &loss_wrt_a);
+            MatSubtract(expected, &OUTPUT_LAYER(nn), &loss_wrt_a);
             MatScale(&loss_wrt_a, -2);
 
             MatCopy(&nn->layers_z[nn->layer_count - 1], &a_wrt_z);
@@ -102,27 +105,25 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
                 case None: MatFill(&a_wrt_z, 1); break;
                 default: break;
             }
-            // MatDerReLU(&a_wrt_z);
             MatHadamard(&loss_wrt_a, &a_wrt_z, &nn->errors[nn->layer_count - 2]);
             MatFree(&loss_wrt_a);
             break;
         case CategoricalCrossEntropy:
             MatFill(&nn->errors[nn->layer_count - 2], 0);
-            MatAdd(&OUTPUT_LAYER(nn), false, expected, true, &nn->errors[nn->layer_count - 2]);
+            MatSubtract(&OUTPUT_LAYER(nn), expected, &nn->errors[nn->layer_count - 2]);
             break;
         default: break;
     }
     
-    MatAdd(&nn->errors[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2], false, &nn->bias_gradients[nn->layer_count - 2]);
+    MatAdd(&nn->errors[nn->layer_count - 2], &nn->bias_gradients[nn->layer_count - 2], &nn->bias_gradients[nn->layer_count - 2]);
     MatMul(&nn->layers_a[nn->layer_count - 2], true, &nn->errors[nn->layer_count - 2], false, &temp_w_grad);
-    MatAdd(&nn->weight_gradients[nn->layer_count - 2], false, &temp_w_grad, false, &nn->weight_gradients[nn->layer_count - 2]);
+    MatAdd(&nn->weight_gradients[nn->layer_count - 2], &temp_w_grad, &nn->weight_gradients[nn->layer_count - 2]);
 
     for (uint16_t i = nn->layer_count - 2; i > 0; i--)
     {
         Matrix temp = MatCreate(nn->weight_gradients[i-1].rows, nn->weight_gradients[i-1].cols);
 
         MatFill(&a_wrt_z, 0);
-
         MatReshape(&a_wrt_z, 1, nn->layers_a[i].cols);
         MatCopy(&nn->layers_z[i], &a_wrt_z);
         switch (nn->activations[i - 1])
@@ -135,10 +136,9 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
 
         MatMul(&nn->errors[i], false, &nn->weights[i], true, &nn->errors[i-1]);
         MatHadamard(&nn->errors[i-1], &a_wrt_z, &nn->errors[i-1]);
-
-        MatAdd(&nn->bias_gradients[i-1], false, &nn->errors[i-1], false, &nn->bias_gradients[i-1]);
         MatMul(&nn->layers_a[i-1], true, &nn->errors[i-1], false, &temp);
-        MatAdd(&nn->weight_gradients[i-1], false, &temp, false, &nn->weight_gradients[i-1]);
+        MatAdd(&nn->bias_gradients[i-1], &nn->errors[i-1], &nn->bias_gradients[i-1]);
+        MatAdd(&nn->weight_gradients[i-1], &temp, &nn->weight_gradients[i-1]);
 
         MatFree(&temp);
     }
@@ -148,13 +148,13 @@ void NNBackProp(NeuralNetwork* nn, Matrix* expected)
 }
 
 void NNUpdateParameters(NeuralNetwork* nn, size_t batch_size)
-{
+{   
     for (size_t i = 0; i < nn->layer_count - 1; i++)
     {
         MatScale(&nn->weight_gradients[i], nn->learning_rate / (float)batch_size);
         MatScale(&nn->bias_gradients[i], nn->learning_rate / (float)batch_size);
-        MatAdd(&nn->weights[i], false, &nn->weight_gradients[i], true, &nn->weights[i]);
-        MatAdd(&nn->biases[i], false, &nn->bias_gradients[i], true, &nn->biases[i]);
+        MatSubtract(&nn->weights[i], &nn->weight_gradients[i], &nn->weights[i]);
+        MatSubtract(&nn->biases[i], &nn->bias_gradients[i], &nn->biases[i]);
         MatFill(&nn->weight_gradients[i], 0);
         MatFill(&nn->bias_gradients[i], 0);
     }
@@ -216,7 +216,7 @@ NeuralNetwork* NNLoad(const char* path)
     uint16_t layer_count;
     Loss loss_function;
     float learning_rate;
-    
+
     FILE* fptr = fopen(path, "rb");
     fseek(fptr, 0, SEEK_SET);
     fread(&layer_count, sizeof(layer_count), 1, fptr); // Layer count (2 bytes)

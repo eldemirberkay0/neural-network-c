@@ -5,7 +5,7 @@
 #include <math.h>
 #include "defs.h"
 
-static inline float FunctionToLearn(float x) { return sqrtf(x); }
+static inline float FunctionToLearn(float x) { return powf(x, 2) - 5; }
 
 #define GRAPH_THICKNESS 4.0f
 #define X_MAX 10.0f

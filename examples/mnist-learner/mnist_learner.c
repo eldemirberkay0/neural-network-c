@@ -13,10 +13,9 @@ int main()
     CreateModel();
     InitWindow(WIDTH, HEIGHT, "MNIST Learner");
     SetTargetFPS(300);
-    LoadModelParameters();
     
     printf("\nDraw a number on the screen and press:\nP: to predict\nT: to train a new model with specified parameters in model.c\n");
-    printf("S: to save current model\nL: to load saved model (pre-trained model in the repo loaded by default)\n");
+    printf("S: to save current model\nL: to load saved model\n");
     while (!WindowShouldClose())
     {
         EditImage();
@@ -33,6 +32,8 @@ int main()
 
         if (IsKeyPressed(KEY_T))
         {
+            FreeModel();
+            CreateModel();
             TrainModel();
             CalculateAccuracy();
         }

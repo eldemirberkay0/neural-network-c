@@ -4,7 +4,7 @@
 #include "plotter.h"
 
 #define BATCH_SIZE 1
-#define LEARNING_RATE 0.0001f
+#define LEARNING_RATE 0.0005f
 
 float* predicted_outputs;
 
@@ -53,4 +53,9 @@ void TrainModel(float* input_datas, float* expected_outputs)
         NNFeedForward(nn);
         predicted_outputs[i] = nn->layers_a[nn->layer_count - 1].data[0];
     }
+}
+
+void RandModel(void)
+{
+    NNRand(nn, -1.0f, 1.0f);
 }
