@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <nn.h>
 #include "mnist_reader.h"
 #include "model.h"
@@ -41,14 +42,13 @@ void TrainModel()
             for (k = 0; k < BATCH_SIZE; k++)
             {
                 if (k + (j * BATCH_SIZE) > NUM_TRAIN_IMAGE - 1) { break; }
-                nn->layers_a[0].data = train_image_data[k + (j * BATCH_SIZE)];
-                nn->layers_z[0].data = train_image_data[k + (j * BATCH_SIZE)];
+                memcpy(nn->layers_a[0].data, train_image_data[k + (j * BATCH_SIZE)], sizeof(float) * SIZE_IMAGE);
+                memcpy(nn->layers_z[0].data, train_image_data[k + (j * BATCH_SIZE)], sizeof(float) * SIZE_IMAGE);
                 MatFill(&expected, 0);
                 expected.data[train_label[k + (j * BATCH_SIZE)]] = 1;
                 NNFeedForward(nn);
                 loss += NNCalculateLoss(nn, &expected);
                 NNBackProp(nn, &expected);
-                //printf("Image: %d\n", k + (j * BATCH_SIZE));
             }
             printf("Epoch %d: %d/%d, Loss: %f\n", i + 1, j + 1, batch_count, loss / k);
             if (loss / k < LOSS_THRESHOLD) { return; }
@@ -64,8 +64,8 @@ void CalculateAccuracy(void)
     uint16_t correct = 0;
     for (int i = 0; i < NUM_TEST_IMAGE; i++)
     {
-        nn->layers_a[0].data = test_image_data[i];
-        nn->layers_z[0].data = test_image_data[i];
+        memcpy(nn->layers_a[0].data, test_image_data[i], sizeof(float) * SIZE_IMAGE);
+        memcpy(nn->layers_z[0].data, test_image_data[i], sizeof(float) * SIZE_IMAGE);
         NNFeedForward(nn);
         uint8_t max_at;
         float p = 0;
@@ -85,8 +85,8 @@ void CalculateAccuracy(void)
 
 void MakePredict(float* drawing)
 {
-    nn->layers_a[0].data = drawing;
-    nn->layers_z[0].data = drawing;
+    memcpy(nn->layers_a[0].data, drawing, sizeof(float) * SIZE_IMAGE);
+    memcpy(nn->layers_z[0].data, drawing, sizeof(float) * SIZE_IMAGE);
     NNFeedForward(nn);
 
     uint8_t max_at;
@@ -114,15 +114,13 @@ void LoadModelParameters(void)
     FILE* fptr = fopen(CMAKE_PATH_TRAINED_MODEL, "rb");
     if (fptr == NULL)
     {
-        printf("Couldn't find model.nn file on %s\n", CMAKE_PATH_TRAINED_MODEL);
+        printf("\nCouldn't find model.nn file on %s\n", CMAKE_PATH_TRAINED_MODEL);
         printf("Please train a new model or download the pre-trained model from the github repo\n");
         fclose(fptr);
         return;
     }
     fclose(fptr);
-    printf("Trying to free nn!\n");
     NNFree(nn);
-    printf("Freed nn!\n");
     nn = NNLoad(CMAKE_PATH_TRAINED_MODEL);
     printf("\nModel loaded from: %s\n", CMAKE_PATH_TRAINED_MODEL);
 }

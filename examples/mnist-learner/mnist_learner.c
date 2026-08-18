@@ -15,9 +15,13 @@ int main()
     CreateModel();
     InitWindow(WIDTH, HEIGHT, "MNIST Learner");
     SetTargetFPS(300);
-    
-    printf("\nDraw a number on the screen and press:\nT: to train a new model with specified parameters in model.c\n");
-    printf("S: to save current model\nL: to load saved model\n");
+    LoadModelParameters();
+    make_predicts = true;
+
+    printf("\nDraw a number on the screen to interact with the network!\n");
+    printf("Also you can press:\nL: to load saved model (pre-trained model is loaded by default)\n");
+    printf("T: to train a new model with specified parameters in model.c\nS: to save current model\n");
+    printf("R: to reset drawing\n");
     while (!WindowShouldClose())
     {
         EditImage();
