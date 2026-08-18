@@ -10,7 +10,7 @@ int main()
 {
     srand((unsigned int)time(NULL));
     InitWindow(WIDTH, HEIGHT, "Function Approximator");
-    SetTargetFPS(144);
+    SetTargetFPS(300);
     SetDataset();
     CreateModel();
     InitCamera();

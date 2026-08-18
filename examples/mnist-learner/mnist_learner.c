@@ -6,6 +6,8 @@
 #include "defs.h"
 #include "drawer.h"
 
+static bool make_predicts = false;
+static char title[10];
 int main()
 {
     srand((unsigned int)time(NULL));
@@ -14,35 +16,40 @@ int main()
     InitWindow(WIDTH, HEIGHT, "MNIST Learner");
     SetTargetFPS(300);
     
-    printf("\nDraw a number on the screen and press:\nP: to predict\nT: to train a new model with specified parameters in model.c\n");
+    printf("\nDraw a number on the screen and press:\nT: to train a new model with specified parameters in model.c\n");
     printf("S: to save current model\nL: to load saved model\n");
     while (!WindowShouldClose())
     {
         EditImage();
         BeginDrawing();
         ClearBackground(BLACK);
-        DrawImage();
+        DrawImage();       
+        EndDrawing();
 
-        if (IsKeyPressed(KEY_P))
+        if (IsKeyPressed(KEY_L)) 
         {
-            DownscaleImage();
-            uint8_t predicted_number = MakePredict(drawing_input);
-            printf("Predicted: %d\n", predicted_number);
+            LoadModelParameters();
+            make_predicts = true;
         }
+        if (IsKeyPressed(KEY_S)) { SaveModelParameters(); }
 
         if (IsKeyPressed(KEY_T))
         {
+            make_predicts = false;
             FreeModel();
             CreateModel();
             TrainModel();
             CalculateAccuracy();
         }
 
-        if (IsKeyPressed(KEY_S)) { SaveModelParameters(); } 
-        if (IsKeyPressed(KEY_L)) { LoadModelParameters(); }
-
-        EndDrawing();
+        if (make_predicts)
+        {
+            DownscaleImage();
+            MakePredict(drawing_input);
+            SetWindowTitle(TextFormat("%d: %.1f%%", predicted_number, confidence * 100));
+        }
     }
+    
     CloseWindow();
     FreeModel();
 

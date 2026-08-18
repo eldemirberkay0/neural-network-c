@@ -15,6 +15,10 @@ static Loss loss = CategoricalCrossEntropy;
 
 static NeuralNetwork* nn;
 
+// externs
+uint8_t predicted_number;
+float confidence;
+
 void CreateModel()
 {
     nn = NNCreate(shape, activations, loss, LEARNING_RATE, LEN(shape));
@@ -79,7 +83,7 @@ void CalculateAccuracy(void)
     printf("Accuracy: %%%.2f\n", correct / 100.0f);
 }
 
-uint8_t MakePredict(float* drawing)
+void MakePredict(float* drawing)
 {
     nn->layers_a[0].data = drawing;
     nn->layers_z[0].data = drawing;
@@ -96,8 +100,8 @@ uint8_t MakePredict(float* drawing)
         }
     }
 
-    MatPrint(&OUTPUT_LAYER(nn));
-    return max_at;
+    predicted_number = max_at;
+    confidence = p;
 }
 
 void SaveModelParameters(void)
@@ -116,7 +120,9 @@ void LoadModelParameters(void)
         return;
     }
     fclose(fptr);
+    printf("Trying to free nn!\n");
     NNFree(nn);
+    printf("Freed nn!\n");
     nn = NNLoad(CMAKE_PATH_TRAINED_MODEL);
     printf("\nModel loaded from: %s\n", CMAKE_PATH_TRAINED_MODEL);
 }
