@@ -22,7 +22,7 @@ This example is aiming training the network to identify images of handwritten nu
 </p>
 
 ## How to Compile
-CMake is configured to compile the library and two examples at once. Raylib and MNIST dataset also will be fetched by CMake. Use this commands in the root directory of the repo:
+CMake is configured to compile the library and two examples at once. Raylib and MNIST dataset also will be fetched by CMake. Use this commands in a directory you want to clone the repo to:
 ```
 git clone https://github.com/eldemirberkay0/neural-network-c.git
 cd neural-network-c
